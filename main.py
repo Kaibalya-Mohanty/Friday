@@ -1,59 +1,54 @@
-import requests
-import pyttsx3
-import speech_recognition as sr
+from agents.gemini import GeminiAgent
+from datetime import datetime
+from elevenlabs.client import ElevenLabs
+from elevenlabs import play
+from config.settings import ELEVENLABS_KEY
 
-# Text-to-speech
-engine = pyttsx3.init()
+# Initialize client
+client = ElevenLabs(api_key=ELEVENLABS_KEY)
 
 
 def speak(text):
-    print("FRIDAY:", text)
-    engine.say(text)
-    engine.runAndWait()
-
-
-# Speech-to-text
-def take_command():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Listening...")
-        r.adjust_for_ambient_noise(source)
-        audio = r.listen(source)
-
     try:
-        command = r.recognize_google(audio)
-        print("You:", command)
-        return command
-    except:
-        return "sorry"
+        print("🔊 Speaking...")
+
+        audio = client.text_to_speech.convert(
+            text=text,
+            voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel voice
+            model_id="eleven_monolingual_v1",
+        )
+
+        play(audio)
+
+    except Exception as e:
+        print("TTS Error:", e)
 
 
-# Send to FastAPI backend
-def send_to_friday_api(user_input):
-    url = "http://127.0.0.1:8000/process"
-    data = {"text": user_input}
+def main():
+    agent = GeminiAgent()
 
-    try:
-        response = requests.post(url, json=data)
-
-        if response.status_code == 200:
-            return response.json()["response"]
-        else:
-            return "Error from server"
-    except:
-        return "Could not connect to FRIDAY backend"
-
-
-# Main loop
-if __name__ == "__main__":
-    speak("FRIDAY is now online")
+    print("FRIDAY: FRIDAY is now online")
+    speak("Friday is now online")
 
     while True:
-        user_input = input("You: ")
+        query = input("You: ")
 
-        if user_input.lower() == "exit":
-            speak("Goodbye")
+        if query.lower() in ["exit", "quit", "bye", "shutdown"]:
+            response = "Shutting down. Goodbye."
+            print("FRIDAY:", response)
+            speak(response)
             break
 
-        response = send_to_friday_api(user_input)
+        # 🕒 Handle time locally
+        if "time" in query.lower():
+            now = datetime.now().strftime("%I:%M %p")
+            response = f"The current time is {now}"
+        else:
+            response = agent.respond(query)
+
+        print("FRIDAY:", response)
         speak(response)
+
+
+if __name__ == "__main__":
+    main()

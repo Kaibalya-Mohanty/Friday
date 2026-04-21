@@ -1,40 +1,30 @@
-from google import genai
+from groq import Groq
 from agents.base import BaseAgent
-from config.settings import GEMINI_API_KEY, GEMINI_MODEL
+from config.settings import GROQ_API_KEY, LLAMA_MODEL
 
 
 class GeminiAgent(BaseAgent):
-    """
-    Handles: web search, news, real-time information, current events.
-    Model: Gemini 2.0 Flash via Google AI Studio (free tier)
-    """
-
     SYSTEM_PROMPT = """
-    You are F.R.I.D.A.Y., Tony Stark's AI assistant.
-    You specialize in finding current information, news, and real-time data.
-    Keep responses concise and spoken-friendly. No markdown, no bullet points.
-    Respond as if speaking out loud. Be informative and direct.
+    You are F.R.I.D.A.Y, Tony Stark's AI assistant.
+    You are smart, fast, and helpful.
+    Answer clearly and naturally.
     """
 
     def __init__(self):
-        self.client = genai.Client(api_key=GEMINI_API_KEY)
+        self.client = Groq(api_key=GROQ_API_KEY)
 
-    def respond(self, query: str, context: list = []) -> str:
+    def respond(self, query: str, context: list = None) -> str:
         try:
-            # Build conversation history as a single string for context
-            context_text = ""
-            if context:
-                for msg in context:
-                    role = "User" if msg["role"] == "user" else "FRIDAY"
-                    context_text += f"{role}: {msg['content']}\n"
+            messages = [
+                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "user", "content": query},
+            ]
 
-            # Combine system prompt + context + query
-            full_prompt = f"{self.SYSTEM_PROMPT}\n\n{context_text}User: {query}"
-
-            response = self.client.models.generate_content(
-                model=GEMINI_MODEL, contents=full_prompt
+            response = self.client.chat.completions.create(
+                model=LLAMA_MODEL, messages=messages
             )
-            return response.text
+
+            return response.choices[0].message.content.strip()
 
         except Exception as e:
-            return f"Gemini agent error: {str(e)}"
+            return f"FRIDAY error: {str(e)}"
