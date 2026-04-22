@@ -19,8 +19,8 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 TAVILY_KEY = os.getenv("TAVILY_API_KEY")
 
 # Models
-LLAMA_MODEL = "llama-3.3-70b-versatile"
-MIXTRAL_MODEL = "mixtral-8x7b-32768"
+LLAMA_MODEL = "llama-3.1-70b-versatile"
+MIXTRAL_MODEL = "llama-3.1-8b-instant"
 GEMINI_MODEL = "gemini-2.0-flash"
 
 # Wake word
